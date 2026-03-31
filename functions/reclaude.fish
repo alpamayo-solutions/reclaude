@@ -264,16 +264,31 @@ function _reclaude_iterm_split
 end
 
 function _reclaude_save
-    echo "Saving current window arrangement as default..."
-    osascript -e '
-        tell application "System Events"
-            tell process "iTerm2"
+    set -l arr_name (defaults read com.googlecode.iterm2 "Default Arrangement Name" 2>/dev/null)
+    if test -z "$arr_name"
+        set arr_name "Default"
+    end
+
+    echo "Saving window arrangement '$arr_name'..."
+    osascript -e "
+        tell application \"System Events\"
+            tell process \"iTerm2\"
                 set frontmost to true
-                click menu item "Save Current Window Arrangement as Default" of menu "Window" of menu bar 1
+                click menu item \"Save Window Arrangement\" of menu \"Arrangements\" of menu item \"Arrangements\" of menu \"Window\" of menu bar 1
+                delay 0.5
+                keystroke \"a\" using command down
+                keystroke \"$arr_name\"
+                delay 0.2
+                keystroke return
+                delay 0.3
+                -- Confirm overwrite if arrangement already exists
+                try
+                    click button \"OK\" of sheet 1 of window 1
+                end try
             end tell
         end tell
-    ' 2>/dev/null
-    and echo "Default window arrangement saved."
+    " 2>/dev/null
+    and echo "Window arrangement '$arr_name' saved."
     or begin
         echo "Failed to save arrangement."
         echo "Make sure iTerm2 is running and Accessibility permissions are granted."
